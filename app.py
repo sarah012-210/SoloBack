@@ -20,6 +20,9 @@ def get_db_connection():
 UPLOAD_FOLDER = os.path.join('static', 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+@app.route('/')
+def home():
+    return jsonify({"message": "Welcome to the API. Use /signup/patient or /signup/doctor to register."}), 200
 
 @app.route('/signup/patient', methods=['POST'])
 def signup_patient():
