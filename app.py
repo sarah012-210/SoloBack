@@ -31,9 +31,7 @@ def signup_patient():
 
     required_fields = [
         'full_name', 'email', 'password', 'confirm_password', 'phone', 'gender',
-        'address', 'date_of_birth', 'emergency_contact',
-        'medical_history', 'family_history', 'current_medications',
-        'allergies', 'insurance'
+        'address', 'date_of_birth', 'emergency_contact','insurance'
     ]
     missing_fields = [f for f in required_fields if not data.get(f)]
     if not file:
@@ -71,7 +69,6 @@ def signup_patient():
             filename,
             data['date_of_birth'],
             data['emergency_contact'],
-
             data['insurance']
         ))
         patient_id = cur.fetchone()['patient_id']
