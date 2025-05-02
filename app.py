@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify,session, redirect, url_for
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -166,6 +166,9 @@ def login():
         cur.execute("SELECT * FROM patients WHERE email = %s", (email,))
         patient = cur.fetchone()
         if patient and check_password_hash(patient['password'], password):
+            # Store session data
+            session['user_id'] = patient['patient_id']
+            session['username'] = patient['email']
             profile_url = f"/profile/patient/{patient['patient_id']}"
             return jsonify({
                 "message": "Login successful",
@@ -177,6 +180,9 @@ def login():
         cur.execute("SELECT * FROM doctors WHERE email = %s", (email,))
         doctor = cur.fetchone()
         if doctor and check_password_hash(doctor['password'], password):
+            # Store session data
+            session['user_id'] = doctor['doctor_id']
+            session['username'] = doctor['email']
             profile_url = f"/profile/doctor/{doctor['doctor_id']}"
             return jsonify({
                 "message": "Login successful",
@@ -205,6 +211,13 @@ def patient_profile(patient_id):
             # Don't include password in the response
             patient_dict = dict(patient)
             patient_dict.pop("password", None)
+
+            # Add full image URL
+            if patient_dict.get("profile_picture"):
+                patient_dict["profile_picture_url"] = url_for('static',
+                                                             filename=f"uploads/{patient_dict['profile_picture']}",
+                                                             _external=True)
+
             return jsonify(patient_dict), 200
 
         if request.method == 'PUT':
@@ -267,6 +280,13 @@ def doctor_profile(doctor_id):
             # Don't include password in the response
             doctor_dict = dict(doctor)
             doctor_dict.pop("password", None)
+
+            # Add full image URL
+            if doctor_dict.get("profile_picture"):
+                doctor_dict["profile_picture_url"] = url_for('static',
+                                                             filename=f"uploads/{doctor_dict['profile_picture']}",
+                                                             _external=True)
+
             return jsonify(doctor_dict), 200
 
         if request.method == 'PUT':
@@ -316,6 +336,17 @@ def doctor_profile(doctor_id):
         return jsonify({"error": str(e)}), 400
     finally:
         cur.close()
+@app.route('/logout', methods=['GET'])
+def logout():
+    # Check if the user is logged in by verifying the session
+    if 'user_id' in session:
+        # Clear the session to log the user out
+        session.pop('user_id', None)
+        session.pop('username', None)
+        return jsonify({"message": "Successfully logged out"}), 200
+    else:
+        # If the user is not logged in, return a message
+        return jsonify({"message": "No active session found"}), 400
 
 if __name__ == "__main__":
     app.run(debug=False, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
