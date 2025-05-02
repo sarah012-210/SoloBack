@@ -58,8 +58,7 @@ def signup_patient():
 
         cur.execute("""INSERT INTO patients (full_name, email, password, phone, gender, address,
                                   profile_picture, date_of_birth, emergency_contact,
-                                  medical_history, family_history, current_medications,
-                                  allergies, insurance)
+                                   insurance)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING patient_id;
         """, (
@@ -72,10 +71,7 @@ def signup_patient():
             filename,
             data['date_of_birth'],
             data['emergency_contact'],
-            data['medical_history'],
-            data['family_history'],
-            data['current_medications'],
-            data['allergies'],
+
             data['insurance']
         ))
         patient_id = cur.fetchone()['patient_id']
