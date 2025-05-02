@@ -30,12 +30,14 @@ def signup_patient():
     file = request.files.get('profile_picture')
 
     required_fields = [
-        'full_name', 'email', 'password', 'confirm_password', 'phone', 'gender',
-        'address', 'date_of_birth', 'emergency_contact','insurance'
+        'full_name', 'email', 'password', 'confirm_password', 'phone',
+        'gender', 'address', 'date_of_birth', 'emergency_contact', 'insurance'
     ]
+
     missing_fields = [f for f in required_fields if not data.get(f)]
     if not file:
         missing_fields.append("profile_picture")
+
     if missing_fields:
         return jsonify({"message": f"Please fill all required fields: {', '.join(missing_fields)}"}), 200
 
@@ -47,17 +49,18 @@ def signup_patient():
     file.save(filepath)
 
     conn = get_db_connection()
-
     cur = conn.cursor()
+
     try:
         cur.execute("SELECT * FROM patients WHERE email = %s", (data['email'],))
         if cur.fetchone():
             return jsonify({"message": "Email already registered as patient"}), 200
 
-        cur.execute("""INSERT INTO patients (full_name, email, password, phone, gender, address,
-                                  profile_picture, date_of_birth, emergency_contact,
-                                   insurance)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        cur.execute("""
+            INSERT INTO patients (
+                full_name, email, password, phone, gender, address,
+                profile_picture, date_of_birth, emergency_contact, insurance
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING patient_id;
         """, (
             data['full_name'],
@@ -71,12 +74,15 @@ def signup_patient():
             data['emergency_contact'],
             data['insurance']
         ))
+
         patient_id = cur.fetchone()['patient_id']
         conn.commit()
         return jsonify({"message": "Patient signed up successfully", "patient_id": patient_id}), 201
+
     except psycopg2.Error as e:
         conn.rollback()
         return jsonify({"error": "Database error: " + str(e)}), 400
+
     finally:
         cur.close()
 
